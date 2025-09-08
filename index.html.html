@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Treinador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            color: #3d3c3b;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 24px;
+            margin-bottom: 2rem;
+        }
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 0.8rem;
+        }
+        th {
+            background-color: #2D2D2D;
+            color: #FFFFFF;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .table-sticky-col {
+            position: sticky;
+            left: 0;
+            background-color: #343A40;
+            color: #FFFFFF;
+            font-weight: 500;
+            z-index: 10;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .table-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            text-align: center;
+            outline: none;
+            -moz-appearance: textfield;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        .table-input:focus {
+            background-color: #eef2f7;
+        }
+        .muscle-row { background-color: #FFFFFF; color: #3d3c3b; }
+        .muscle-row:nth-child(even) { background-color: #F8F9FA; }
+        .btn-primary {
+            background-color: #007BFF;
+            color: #FFFFFF;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 12px 24px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #3d3c3b;
+        }
+        .label {
+            display: block;
+            color: #4A5568;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #D1D5DB;
+            background-color: #F9FAFB;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #3B82F6;
+        }
+        #output-area {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            background-color: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 150px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Header e Navegação -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <span class="text-lg font-bold text-gray-800">Painel do Treinador</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#dados-aluno" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Aluno</a>
+                        <a href="#analise" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Plano de Treino</a>
+                        <a href="#graficos" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Gráficos</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Seção de Gestão de Alunos -->
+        <section id="gestao-alunos" class="mb-12">
+            <div class="card">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="text-2xl mr-2">👥</span> Gestão de Alunos
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="student-select" class="label">Selecionar Aluno</label>
+                        <select id="student-select" class="input-field"></select>
+                    </div>
+                    <div>
+                        <label for="new-student-name-input" class="label">Adicionar Novo Aluno</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="new-student-name-input" class="input-field flex-grow" placeholder="Nome do Novo Aluno">
+                            <button id="add-student-button" class="btn-primary flex-shrink-0">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção de Dados do Aluno -->
+        <section id="dados-aluno" class="mb-12">
+            <div class="card">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="text-2xl mr-2">🧑‍🎓</span> Informações do Aluno
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label for="student-name-input" class="label">Nome Completo</label>
+                        <input type="text" id="student-name-input" class="input-field" placeholder="Nome do Aluno" readonly>
+                    </div>
+                    <div>
+                        <label for="student-date-of-birth-input" class="label">Data de Nascimento</label>
+                        <input type="date" id="student-date-of-birth-input" class="input-field">
+                    </div>
+                    <div>
+                        <label for="student-age-input" class="label">Idade</label>
+                        <input type="text" id="student-age-input" class="input-field bg-gray-200" placeholder="-" readonly>
+                    </div>
+                    <div>
+                        <label for="student-email-input" class="label">Email</label>
+                        <input type="email" id="student-email-input" class="input-field" placeholder="email@exemplo.com">
+                    </div>
+                    <div>
+                        <label for="student-whatsapp-input" class="label">WhatsApp</label>
+                        <input type="tel" id="student-whatsapp-input" class="input-field" placeholder="(00) 00000-0000">
+                    </div>
+                    <div>
+                        <label for="student-goal-input" class="label">Objetivo Principal</label>
+                        <input type="text" id="student-goal-input" class="input-field" placeholder="Ex: Hipertrofia, emagrecimento">
+                    </div>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button id="save-data-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Guardar Dados
+                    </button>
+                </div>
+                 <p id="trainer-id-display" class="text-xs text-gray-400 mt-4 text-right"></p>
+            </div>
+        </section>
+
+        <!-- Seção de Análise do Volume de Treino -->
+        <section id="analise" class="mb-12">
+            <div class="card">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <span class="text-2xl mr-2">🗓️</span> Análise do Volume Semanal
+                </h2>
+                <p class="text-sm text-gray-600 leading-relaxed mb-6">
+                    A tabela abaixo indica a progressão de volume (número de séries) para cada grupo muscular nas próximas 8 semanas. Controle os dados para sua evolução, dada a relação de dose-resposta do treino.
+                </p>
+                <div class="table-container">
+                    <table id="volume-table" class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-white uppercase bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 sticky left-0 bg-gray-700">Grupo Muscular</th>
+                                <th scope="col" class="px-4 py-3">Semana 1</th>
+                                <th scope="col" class="px-4 py-3">Semana 2</th>
+                                <th scope="col" class="px-4 py-3">Semana 3</th>
+                                <th scope="col" class="px-4 py-3">Semana 4</th>
+                                <th scope="col" class="px-4 py-3">Semana 5</th>
+                                <th scope="col" class="px-4 py-3">Semana 6</th>
+                                <th scope="col" class="px-4 py-3">Semana 7</th>
+                                <th scope="col" class="px-4 py-3">Semana 8</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Peito</td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                            </tr>
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Upper Back</td>
+                                <td><input type="number" class="table-input" value="15"></td>
+                                <td><input type="number" class="table-input" value="15"></td>
+                                <td><input type="number" class="table-input" value="18"></td>
+                                <td><input type="number" class="table-input" value="18"></td>
+                                <td><input type="number" class="table-input" value="20"></td>
+                                <td><input type="number" class="table-input" value="20"></td>
+                                <td><input type="number" class="table-input" value="20"></td>
+                                <td><input type="number" class="table-input" value="18"></td>
+                            </tr>
+                             <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Latissimo</td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                            </tr>
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Trapézio Superior</td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="6"></td>
+                            </tr>
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Bíceps</td>
+                                <td><input type="number" class="table-input" value="6"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="6"></td>
+                            </tr>
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Tríceps</td>
+                                <td><input type="number" class="table-input" value="6"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="6"></td>
+                            </tr>
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Deltoides</td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                            </tr>
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Quadríceps</td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="18"></td>
+                                <td><input type="number" class="table-input" value="20"></td>
+                                <td><input type="number" class="table-input" value="20"></td>
+                                <td><input type="number" class="table-input" value="18"></td>
+                                <td><input type="number" class="table-input" value="18"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                            </tr>
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Isquiotibiais</td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                            </tr>
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Glúteos</td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="18"></td>
+                                <td><input type="number" class="table-input" value="18"></td>
+                                <td><input type="number" class="table-input" value="20"></td>
+                                <td><input type="number" class="table-input" value="20"></td>
+                                <td><input type="number" class="table-input" value="18"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                            </tr>
+                            <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50">Abdominal</td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="16"></td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="14"></td>
+                                <td><input type="number" class="table-input" value="12"></td>
+                            </tr>
+                             <tr class="muscle-row">
+                                <td class="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-gray-50 rounded-bl-lg">Panturrilhas</td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="10"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="8"></td>
+                                <td><input type="number" class="table-input" value="6"></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-gray-200 text-gray-800 font-bold" id="total-row">
+                                <td class="px-4 py-2 sticky left-0 bg-gray-200 rounded-bl-lg">Volume Total</td>
+                                <td class="px-4 py-2">0</td>
+                                <td class="px-4 py-2">0</td>
+                                <td class="px-4 py-2">0</td>
+                                <td class="px-4 py-2">0</td>
+                                <td class="px-4 py-2">0</td>
+                                <td class="px-4 py-2">0</td>
+                                <td class="px-4 py-2">0</td>
+                                <td class="px-4 py-2 rounded-br-lg">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gráficos -->
+        <section id="graficos" class="mb-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="card">
+                <h2 class="text-xl font-bold text-[#212529] mb-4">
+                    Evolução do Volume Total <span class="text-2xl">📈</span>
+                </h2>
+                <div class="chart-container" style="height:40vh; max-width:600px; margin: auto;">
+                    <canvas id="volume-chart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="text-xl font-bold text-[#212529] mb-4">
+                    Foco por Grupo Muscular <span class="text-2xl">🎯</span>
+                </h2>
+                <div class="mb-4">
+                    <label for="muscle-group-select" class="block text-[#212529] font-semibold mb-2">Selecionar Grupo Muscular:</label>
+                    <select id="muscle-group-select" class="w-full p-3 rounded-lg border-2 border-gray-200 focus:outline-none focus:border-blue-500 text-[#212529] bg-[#F8F9FA]">
+                        <option value="Peito">Peito</option>
+                        <option value="Upper Back">Upper Back</option>
+                        <option value="Latissimo">Latíssimo</option>
+                        <option value="Trapézio Superior">Trapézio Superior</option>
+                        <option value="Bíceps">Bíceps</option>
+                        <option value="Tríceps">Tríceps</option>
+                        <option value="Deltoides">Deltoides</option>
+                        <option value="Quadríceps">Quadríceps</option>
+                        <option value="Isquiotibiais">Isquiotibiais</option>
+                        <option value="Glúteos">Glúteos</option>
+                        <option value="Abdominal">Abdominal</option>
+                        <option value="Panturrilhas">Panturrilhas</option>
+                    </select>
+                </div>
+                <div class="chart-container" style="height:40vh; max-width:600px; margin: auto;">
+                    <canvas id="muscle-group-chart"></canvas>
+                </div>
+            </div>
+            <div class="card lg:col-span-2">
+                <h2 class="text-xl font-bold text-[#212529] mb-4">
+                    Comparativo Semanal de Volume <span class="text-2xl">🆚</span>
+                </h2>
+                <p class="text-sm text-gray-600 leading-relaxed mb-4">
+                    Selecione duas semanas para comparar a distribuição de volume de treino em cada grupo muscular.
+                </p>
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+                    <div class="flex-1">
+                        <label for="week-select-1" class="block text-[#212529] font-semibold mb-2">Comparar Semana:</label>
+                        <select id="week-select-1" class="w-full p-3 rounded-lg border-2 border-gray-200 focus:outline-none focus:border-blue-500 text-[#212529] bg-[#F8F9FA]"></select>
+                    </div>
+                    <div class="flex-1">
+                        <label for="week-select-2" class="block text-[#212529] font-semibold mb-2">Com Semana:</label>
+                        <select id="week-select-2" class="w-full p-3 rounded-lg border-2 border-gray-200 focus:outline-none focus:border-blue-500 text-[#212529] bg-[#F8F9FA]"></select>
+                    </div>
+                </div>
+                <div class="chart-container" style="height:50vh; max-width:700px; margin: auto;">
+                    <canvas id="radar-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        
+        // Firebase Config
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        let db, auth;
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            // Firebase Firestore não tem setLogLevel na versão modular.
+            console.log("Firebase inicializado com sucesso.");
+        } catch (e) {
+            console.error("A inicialização do Firebase falhou. Usando dados fictícios. Erro:", e);
+        }
+
+        // --- Variáveis Globais ---
+        let trainerId = null;
+        let selectedStudentId = null;
+
+        const studentSelect = document.getElementById('student-select');
+        const newStudentNameInput = document.getElementById('new-student-name-input');
+        const addStudentButton = document.getElementById('add-student-button');
+
+        const studentNameInput = document.getElementById('student-name-input');
+        const studentGoalInput = document.getElementById('student-goal-input');
+        const studentDateOfBirthInput = document.getElementById('student-date-of-birth-input');
+        const studentAgeInput = document.getElementById('student-age-input');
+        const studentEmailInput = document.getElementById('student-email-input');
+        const studentWhatsappInput = document.getElementById('student-whatsapp-input');
+        const trainerIdDisplay = document.getElementById('trainer-id-display');
+        const saveButton = document.getElementById('save-data-button');
+        const table = document.getElementById('volume-table');
+        const totalRow = document.getElementById('total-row');
+        const inputs = table.querySelectorAll('input[type="number"]');
+        const muscleGroupSelect = document.getElementById('muscle-group-select');
+        const weekSelect1 = document.getElementById('week-select-1');
+        const weekSelect2 = document.getElementById('week-select-2');
+        
+        const weeklyLabels = ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4', 'Semana 5', 'Semana 6', 'Semana 7', 'Semana 8'];
+        const initialData = new Array(8).fill(0);
+        const chartCanvasTotal = document.getElementById('volume-chart').getContext('2d');
+        const chartCanvasMuscle = document.getElementById('muscle-group-chart').getContext('2d');
+        const radarChartCanvas = document.getElementById('radar-chart').getContext('2d');
+
+        const muscleGroupLabels = ['Peito', 'Upper Back', 'Latissimo', 'Trapézio Superior', 'Bíceps', 'Tríceps', 'Deltoides', 'Quadríceps', 'Isquiotibiais', 'Glúteos', 'Abdominal', 'Panturrilhas'];
+        const muscleColors = [
+            '#3b82f6', // blue-500
+            '#10b981', // emerald-500
+            '#f59e0b', // amber-500
+            '#ef4444', // red-500
+            '#8b5cf6', // violet-500
+            '#ec4899', // pink-500
+            '#6366f1', // indigo-500
+            '#06b6d4', // cyan-500
+            '#f43f5e', // rose-500
+            '#84cc16', // lime-500
+            '#d946ef', // fuchsia-500
+            '#a855f7'  // purple-500
+        ];
+
+        const muscleColorMap = new Map(muscleGroupLabels.map((label, index) => [label, muscleColors[index % muscleColors.length]]));
+
+        function getMuscleColor(muscleName) {
+            return muscleColorMap.get(muscleName) || '#A0AEC0';
+        }
+
+        const chartOptions = (yLabel) => ({
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: yLabel, color: '#4b5563' }, grid: { color: '#e5e7eb' }, ticks: { color: '#4b5563' } },
+                x: { title: { display: false }, grid: { display: false }, ticks: { color: '#4b5563' } }
+            },
+            plugins: { legend: { display: false } }
+        });
+
+        const volumeChartTotal = new Chart(chartCanvasTotal, {
+            type: 'bar',
+            data: { labels: weeklyLabels, datasets: [{ label: 'Volume Total de Séries', data: initialData, backgroundColor: '#3b82f6', borderRadius: 5 }] },
+            options: chartOptions('Volume Total de Séries')
+        });
+
+        const volumeChartMuscle = new Chart(chartCanvasMuscle, {
+            type: 'bar',
+            data: { labels: weeklyLabels, datasets: [{ label: '', data: initialData, backgroundColor: '#3b82f6', borderRadius: 5 }] },
+            options: chartOptions('Volume de Séries do Grupo Muscular')
+        });
+
+        const radarChart = new Chart(radarChartCanvas, {
+            type: 'radar',
+            data: {
+                labels: muscleGroupLabels,
+                datasets: [
+                    {
+                        label: 'Semana 1',
+                        data: Array(muscleGroupLabels.length).fill(0),
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#3b82f6'
+                    },
+                    {
+                        label: 'Semana 2',
+                        data: Array(muscleGroupLabels.length).fill(0),
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#ef4444'
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: '#d1d5db' },
+                        grid: { color: '#d1d5db' },
+                        pointLabels: { color: '#374151', font: { size: 12 } },
+                        ticks: { color: '#4b5563', backdropColor: 'rgba(255, 255, 255, 0.75)', backdropPadding: 3 }
+                    }
+                },
+                plugins: { legend: { position: 'top', labels: { color: '#374151' } } }
+            }
+        });
+
+        function calculateWeeklyTotals() {
+            const totals = new Array(8).fill(0);
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('input[type="number"]');
+                cells.forEach((input, index) => {
+                    totals[index] += parseInt(input.value, 10) || 0;
+                });
+            });
+            return totals;
+        }
+
+        function updateAllChartsAndTable() {
+            const totals = calculateWeeklyTotals();
+            const totalCells = totalRow.querySelectorAll('td:not(.table-sticky-col)');
+            totalCells.forEach((cell, index) => {
+                cell.textContent = totals[index];
+            });
+
+            volumeChartTotal.data.datasets[0].data = totals;
+            volumeChartTotal.update();
+            updateMuscleGroupChart();
+            updateRadarChart();
+        }
+
+        function updateMuscleGroupChart() {
+            const selectedGroup = muscleGroupSelect.value;
+            const rowIndex = muscleGroupLabels.indexOf(selectedGroup);
+
+            if (rowIndex !== -1) {
+                const row = table.rows[rowIndex + 1];
+                const rowData = Array.from(row.querySelectorAll('input')).map(input => parseInt(input.value) || 0);
+
+                volumeChartMuscle.data.datasets[0].data = rowData;
+                volumeChartMuscle.data.datasets[0].label = `Volume de ${selectedGroup}`;
+                volumeChartMuscle.data.datasets[0].backgroundColor = getMuscleColor(selectedGroup);
+                volumeChartMuscle.update();
+            }
+        }
+
+        function updateRadarChart() {
+            const week1Index = weekSelect1.selectedIndex;
+            const week2Index = weekSelect2.selectedIndex;
+
+            const dataWeek1 = [];
+            const dataWeek2 = [];
+
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input[type="number"]');
+                dataWeek1.push(parseInt(inputs[week1Index].value) || 0);
+                dataWeek2.push(parseInt(inputs[week2Index].value) || 0);
+            });
+            
+            radarChart.data.datasets[0].label = `Semana ${week1Index + 1}`;
+            radarChart.data.datasets[0].data = dataWeek1;
+            radarChart.data.datasets[1].label = `Semana ${week2Index + 1}`;
+            radarChart.data.datasets[1].data = dataWeek2;
+            radarChart.update();
+        }
+
+        function calculateAgeFromDate() {
+            const birthDate = new Date(studentDateOfBirthInput.value);
+            if (studentDateOfBirthInput.value) {
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                studentAgeInput.value = age;
+            } else {
+                studentAgeInput.value = '';
+            }
+        }
+
+        function setupListeners() {
+            studentDateOfBirthInput.addEventListener('input', calculateAgeFromDate);
+            muscleGroupSelect.addEventListener('change', updateMuscleGroupChart);
+            weekSelect1.addEventListener('change', updateRadarChart);
+            weekSelect2.addEventListener('change', updateRadarChart);
+
+            let debounceTimer;
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        updateAllChartsAndTable();
+                        if (selectedStudentId) {
+                            saveData(trainerId, selectedStudentId);
+                        }
+                    }, 500);
+                });
+            });
+
+            saveButton.addEventListener('click', () => {
+                if (trainerId && selectedStudentId) {
+                    saveData(trainerId, selectedStudentId);
+                    // Use a mensagem personalizada em vez de alert()
+                    console.log("Dados do aluno guardados com sucesso!");
+                } else {
+                    console.error("Aluno não selecionado ou usuário não autenticado.");
+                }
+            });
+
+            addStudentButton.addEventListener('click', async () => {
+                const newStudentName = newStudentNameInput.value.trim();
+                if (newStudentName && trainerId) {
+                    try {
+                        const studentsCollection = collection(db, 'artifacts', appId, 'users', trainerId, 'students');
+                        const newDocRef = await addDoc(studentsCollection, { name: newStudentName });
+                        newStudentNameInput.value = '';
+                        selectedStudentId = newDocRef.id;
+                        console.log("Novo aluno adicionado com sucesso!");
+                    } catch (error) {
+                        console.error("Erro ao adicionar novo aluno:", error);
+                    }
+                }
+            });
+            
+            studentSelect.addEventListener('change', (e) => {
+                selectedStudentId = e.target.value;
+                if (selectedStudentId) {
+                    loadStudentData(trainerId, selectedStudentId);
+                } else {
+                    resetFormAndTable();
+                }
+            });
+
+            // Populate week selects
+            for(let i = 1; i <= 8; i++) {
+                const option1 = document.createElement('option');
+                option1.value = i - 1;
+                option1.textContent = `Semana ${i}`;
+                weekSelect1.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = i - 1;
+                option2.textContent = `Semana ${i}`;
+                weekSelect2.appendChild(option2);
+            }
+            weekSelect2.value = '1';
+        }
+
+        async function saveData(trainerId, studentId) {
+            const studentDocRef = doc(db, 'artifacts', appId, 'users', trainerId, 'students', studentId, 'student_data', 'profile');
+            const volumeDocRef = doc(db, 'artifacts', appId, 'users', trainerId, 'students', studentId, 'volume_data', 'volumes');
+
+            const studentData = {
+                name: studentNameInput.value,
+                goal: studentGoalInput.value,
+                dateOfBirth: studentDateOfBirthInput.value,
+                age: studentAgeInput.value,
+                email: studentEmailInput.value,
+                whatsapp: studentWhatsappInput.value,
+            };
+
+            const volumeData = Array.from(table.rows).slice(1, -1).map(row => 
+                Array.from(row.cells).slice(1, 9).map(cell => parseInt(cell.querySelector('input').value) || 0)
+            );
+            
+            try {
+                await setDoc(studentDocRef, studentData, { merge: true });
+                await setDoc(volumeDocRef, { volumes: JSON.stringify(volumeData) }, { merge: true });
+            } catch (error) {
+                console.error("Erro ao guardar os dados: ", error);
+            }
+        }
+        
+        function resetFormAndTable() {
+            studentNameInput.value = '';
+            studentGoalInput.value = '';
+            studentDateOfBirthInput.value = '';
+            studentAgeInput.value = '';
+            studentEmailInput.value = '';
+            studentWhatsappInput.value = '';
+            const defaultValues = [
+                [10, 10, 12, 12, 12, 10, 10, 8],
+                [15, 15, 18, 18, 20, 20, 20, 18],
+                [12, 12, 14, 16, 16, 14, 12, 12],
+                [8, 10, 12, 12, 10, 8, 8, 6],
+                [6, 8, 8, 10, 10, 8, 8, 6],
+                [6, 8, 8, 10, 10, 8, 8, 6],
+                [12, 12, 14, 16, 16, 14, 12, 12],
+                [16, 16, 18, 20, 20, 18, 18, 16],
+                [10, 12, 12, 14, 14, 12, 10, 10],
+                [16, 18, 18, 20, 20, 18, 16, 16],
+                [14, 14, 16, 16, 16, 14, 14, 12],
+                [8, 8, 10, 10, 10, 8, 8, 6]
+            ];
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach((row, rowIndex) => {
+                const inputs = row.querySelectorAll('input[type="number"]');
+                inputs.forEach((input, colIndex) => {
+                    input.value = defaultValues[rowIndex][colIndex];
+                });
+            });
+            updateAllChartsAndTable();
+        }
+
+        function loadStudentData(trainerId, studentId) {
+            const studentDocRef = doc(db, 'artifacts', appId, 'users', trainerId, 'students', studentId, 'student_data', 'profile');
+            const volumeDocRef = doc(db, 'artifacts', appId, 'users', trainerId, 'students', studentId, 'volume_data', 'volumes');
+
+            onSnapshot(studentDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    studentNameInput.value = data.name || '';
+                    studentGoalInput.value = data.goal || '';
+                    studentDateOfBirthInput.value = data.dateOfBirth || '';
+                    studentEmailInput.value = data.email || '';
+                    studentWhatsappInput.value = data.whatsapp || '';
+                    if (data.dateOfBirth) calculateAgeFromDate();
+                } else {
+                    console.log("Dados do aluno não encontrados, usando valores padrão.");
+                    studentNameInput.value = studentSelect.options[studentSelect.selectedIndex].text;
+                    studentGoalInput.value = '';
+                    studentDateOfBirthInput.value = '';
+                    studentAgeInput.value = '';
+                    studentEmailInput.value = '';
+                    studentWhatsappInput.value = '';
+                }
+            });
+
+            onSnapshot(volumeDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if(data.volumes) {
+                        try {
+                            const parsedData = JSON.parse(data.volumes);
+                            updateTableWithData(parsedData);
+                            updateAllChartsAndTable();
+                        } catch (e) {
+                            console.error("Erro ao fazer parse dos dados de volume: ", e);
+                            resetFormAndTable();
+                        }
+                    }
+                } else {
+                    console.log("Dados de volume não encontrados, usando valores padrão.");
+                    resetFormAndTable();
+                }
+            });
+        }
+        
+        function updateTableWithData(volumeData) {
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach((row, rowIndex) => {
+                const inputs = row.querySelectorAll('input[type="number"]');
+                inputs.forEach((input, colIndex) => {
+                    input.value = volumeData[rowIndex] ? volumeData[rowIndex][colIndex] || 0 : 0;
+                });
+            });
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                trainerId = user.uid;
+                trainerIdDisplay.textContent = `ID do Treinador: ${trainerId}`;
+                
+                const studentsCollection = collection(db, 'artifacts', appId, 'users', trainerId, 'students');
+
+                onSnapshot(studentsCollection, (querySnapshot) => {
+                    studentSelect.innerHTML = '<option value="">Selecionar Aluno...</option>';
+                    querySnapshot.forEach((doc) => {
+                        const studentData = doc.data();
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = studentData.name;
+                        studentSelect.appendChild(option);
+                    });
+
+                    // Auto-select the first student or the last selected one
+                    if (querySnapshot.size > 0) {
+                        const firstStudentId = querySnapshot.docs[0].id;
+                        selectedStudentId = selectedStudentId || firstStudentId;
+                        studentSelect.value = selectedStudentId;
+                        loadStudentData(trainerId, selectedStudentId);
+                    } else {
+                        resetFormAndTable();
+                        selectedStudentId = null;
+                    }
+                });
+
+            } else {
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Erro de autenticação:", error);
+                }
+            }
+        });
+        
+        setupListeners();
+    </script>
+</body>
+</html>
